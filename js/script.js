@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const activitiesBox = document.getElementById('activities-box');
 	const activitiesCheckboxes = document.querySelectorAll('#activities-box input[type="checkbox"]');
 	const activitiesCost = document.getElementById('activities-cost');
+	const activitiesHint = document.getElementById('activities-hint');
 	const paymentSelect = document.getElementById('payment');
 	const creditCardDiv = document.getElementById('credit-card');
 	const paypalDiv = document.getElementById('paypal');
@@ -56,42 +57,56 @@ document.addEventListener('DOMContentLoaded', () => {
 		
 		// Filter color options based on selected theme
 		colorOptions.forEach(option => {
-		const optionTheme = option.getAttribute('data-theme');
-		
-		if (optionTheme === selectedTheme) {
-			option.hidden = false;
+			const optionTheme = option.getAttribute('data-theme');
+			
+			if (optionTheme === selectedTheme) {
+				option.hidden = false;
 			// Select the first available color for the theme
 			if (!colorSelect.value || colorSelect.value === colorOptions[0].value) {
 				option.selected = true;
 			}
-		} else if (optionTheme) { // Skip the default option which has no data-theme
-			option.hidden = true;
-			option.selected = false;
-		}
+			} else if (optionTheme) { // Skip the default option which has no data-theme
+				option.hidden = true;
+				option.selected = false;
+			}
 		});
 	});
 
 	// Activities Section - Calculate and update total cost
 	let totalCost = 0;
-
+	
 	activitiesFieldset.addEventListener('change', (e) => {
-		const clicked = e.target;
-		
-		// Only process if a checkbox was clicked
-		if (clicked.type === 'checkbox') {
+	const clicked = e.target;
+	
+	// Only process if a checkbox was clicked
+	if (clicked.type === 'checkbox') {
 		const dataCost = parseInt(clicked.getAttribute('data-cost'));
 		
 		// Update total cost based on checkbox state
 		if (clicked.checked) {
 			totalCost += dataCost;
+			
+			// Remove validation error if at least one activity is checked
+			if (totalCost > 0) {
+				activitiesBox.classList.remove('not-valid');
+				activitiesBox.classList.add('valid');
+				activitiesHint.style.display = 'none';
+			}
 		} else {
 			totalCost -= dataCost;
+		
+			// Add validation error if no activities are checked
+			if (totalCost === 0) {
+				activitiesBox.classList.add('not-valid');
+				activitiesBox.classList.remove('valid');
+				activitiesHint.style.display = 'block';
+			}
 		}
 		
 		// Update cost display
 		activitiesCost.textContent = `Total: $${totalCost}`;
-		}
-	});
+	}
+});
 
 	// Payment Info Section
 	// Set credit card as default payment method
@@ -118,39 +133,39 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 
 	// Form validation helper functions
-
+	
 	// Validate name field - can't be blank
 	const isValidName = () => {
 		return nameInput.value.trim() !== '';
 	};
-
+	
 	// Validate email with regex
 	const isValidEmail = () => {
 		const emailRegex = /^[^@]+@[^@.]+\.[a-z]+$/i;
 		return emailRegex.test(emailInput.value);
 	};
-
+	
 	// Validate at least one activity is selected
 	const isValidActivities = () => {
 		return totalCost > 0;
 	};
-
+	
 	// Credit card validation functions
 	const isValidCardNumber = () => {
 		const ccRegex = /^\d{13,16}$/;
 		return ccRegex.test(ccNum.value.trim());
 	};
-
+	
 	const isValidZip = () => {
 		const zipRegex = /^\d{5}$/;
 		return zipRegex.test(zipCode.value.trim());
 	};
-
+	
 	const isValidCVV = () => {
 		const cvvRegex = /^\d{3}$/;
 		return cvvRegex.test(cvv.value.trim());
 	};
-
+	
 	// Helper functions to show/hide validation errors
 	const showValidationError = (element, show) => {
 		const parentElement = element.parentElement;
@@ -164,29 +179,29 @@ document.addEventListener('DOMContentLoaded', () => {
 			parentElement.lastElementChild.style.display = 'none';
 		}
 	};
-
+	
 	// For activities fieldset, the structure is different
 	const showActivitiesError = (show) => {
 		if (show) {
 			activitiesBox.classList.add('not-valid');
 			activitiesBox.classList.remove('valid');
-			document.getElementById('activities-hint').style.display = 'block';
+			activitiesHint.style.display = 'block';
 		} else {
 			activitiesBox.classList.add('valid');
 			activitiesBox.classList.remove('not-valid');
-			document.getElementById('activities-hint').style.display = 'none';
+			activitiesHint.style.display = 'none';
 		}
 	};
-
+	
 	// Real-time validation for better user experience
 	nameInput.addEventListener('blur', () => {
 		showValidationError(nameInput, !isValidName());
 	});
-
+	
 	emailInput.addEventListener('blur', () => {
 		showValidationError(emailInput, !isValidEmail());
 	});
-
+	
 	// Add accessibility features to activities checkboxes
 	activitiesCheckboxes.forEach(checkbox => {
 		// Focus event adds focus class to parent label
@@ -199,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			e.target.parentElement.classList.remove('focus');
 		});
 	});
-
+	
 	// Form submission validation
 	form.addEventListener('submit', (e) => {
 		// Validate each required field
@@ -233,26 +248,26 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (paymentSelect.value === 'credit-card') {
 			// Card number validation
 			if (!isValidCardNumber()) {
-				showValidationError(ccNum, true);
-				formValid = false;
+			showValidationError(ccNum, true);
+			formValid = false;
 			} else {
-				showValidationError(ccNum, false);
+			showValidationError(ccNum, false);
 			}
 			
 			// Zip code validation
 			if (!isValidZip()) {
-				showValidationError(zipCode, true);
-				formValid = false;
+			showValidationError(zipCode, true);
+			formValid = false;
 			} else {
-				showValidationError(zipCode, false);
+			showValidationError(zipCode, false);
 			}
 			
 			// CVV validation
 			if (!isValidCVV()) {
-				showValidationError(cvv, true);
-				formValid = false;
+			showValidationError(cvv, true);
+			formValid = false;
 			} else {
-				showValidationError(cvv, false);
+			showValidationError(cvv, false);
 			}
 		}
 		
